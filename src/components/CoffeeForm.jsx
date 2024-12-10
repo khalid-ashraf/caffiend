@@ -1,14 +1,22 @@
 import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { handleOpenModal } from "../state/modalSlice";
 import { coffeeOptions } from "../utils";
 
-const CoffeeForm = () => {
+const CoffeeForm = ({ isAuthenticated }) => {
   const [selectedCoffee, setSelectedCoffee] = useState(null);
   const [showCoffeeTypes, setShowCoffeeTypes] = useState(false);
   const [coffeeCost, setCoffeeCost] = useState(0);
   const [hour, setHour] = useState(0);
   const [min, setMin] = useState(0);
 
+  const dispatch = useDispatch();
+
   const handleSubmitForm = () => {
+    if (!isAuthenticated) {
+      dispatch(handleOpenModal());
+      return;
+    }
     console.log(selectedCoffee, coffeeCost, hour, min);
   };
 
@@ -19,6 +27,7 @@ const CoffeeForm = () => {
         <h2>Start Tracking Today</h2>
       </div>
 
+      {/* CoffeeType Component is defined below */}
       <CoffeeType
         coffeeOptions={coffeeOptions}
         showCoffeeTypes={showCoffeeTypes}
@@ -36,6 +45,7 @@ const CoffeeForm = () => {
         placeholder='4.50'
       />
 
+      {/* TimeEntry Component is defined below */}
       <TimeEntry
         setHour={setHour}
         setMin={setMin}
