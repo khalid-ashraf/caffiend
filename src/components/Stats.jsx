@@ -1,15 +1,17 @@
+import { useAuth } from "../state/store";
 import {
   calculateCoffeeStats,
   calculateCurrentCaffeineLevel,
-  coffeeConsumptionHistory,
   getTopThreeCoffees,
   statusLevels,
 } from "../utils";
 
 const Stats = () => {
-  const stats = calculateCoffeeStats(coffeeConsumptionHistory);
+  const { globalData } = useAuth();
 
-  const caffeineLevel = calculateCurrentCaffeineLevel(coffeeConsumptionHistory);
+  const stats = calculateCoffeeStats(globalData);
+
+  const caffeineLevel = calculateCurrentCaffeineLevel(globalData);
   const warningLevel =
     caffeineLevel < statusLevels["low"].maxLevel
       ? "low"
@@ -39,7 +41,7 @@ const Stats = () => {
                 background: statusLevels[warningLevel].background,
               }}
             >
-              Low
+              {warningLevel}
             </h5>
           </div>
           <p>{statusLevels[warningLevel].description}</p>
@@ -78,17 +80,15 @@ const Stats = () => {
             </tr>
           </thead>
           <tbody>
-            {getTopThreeCoffees(coffeeConsumptionHistory).map(
-              (coffee, coffeeIndex) => {
-                return (
-                  <tr key={coffeeIndex}>
-                    <td>{coffee.coffeeName}</td>
-                    <td>{coffee.count}</td>
-                    <td>{coffee.percentage}</td>
-                  </tr>
-                );
-              }
-            )}
+            {getTopThreeCoffees(globalData).map((coffee, coffeeIndex) => {
+              return (
+                <tr key={coffeeIndex}>
+                  <td>{coffee.coffeeName}</td>
+                  <td>{coffee.count}</td>
+                  <td>{coffee.percentage}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

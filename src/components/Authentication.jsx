@@ -1,26 +1,24 @@
 import { useRef } from "react";
 import { useDispatch } from "react-redux";
-import {
-  setIsRegistration,
-  setEmail,
-  setPassword,
-  setIsAuthenticating,
-  handleSubmit,
-} from "../state/formInputSlice";
+
 import { useFormInput } from "../state/store";
 import { signup, login } from "../state/authSlice";
+import {
+  setIsRegistration,
+  setIsAuthenticating,
+} from "../state/formInputSlice";
 import { handleCloseModal } from "../state/modalSlice";
 
 const Authentication = () => {
-  const { isRegistration, email, password, isAuthenticating } = useFormInput();
+  const { isRegistration, isAuthenticating } = useFormInput();
   const dispatch = useDispatch();
 
   const emailRef = useRef("");
   const passwordRef = useRef("");
 
   const handleAuthenticate = async () => {
-    const emailValue = emailRef.current.value;
-    const passwordValue = passwordRef.current.value;
+    const emailValue = emailRef.current?.value;
+    const passwordValue = passwordRef.current?.value;
 
     try {
       dispatch(setIsAuthenticating(true));

@@ -32,7 +32,6 @@ export const fetchUserData = createAsyncThunk(
     let firebaseData = {};
     if (docSnap.exists()) {
       firebaseData = docSnap.data();
-      console.log("Found user data", firebaseData);
     }
     return firebaseData;
   }
@@ -41,10 +40,7 @@ export const fetchUserData = createAsyncThunk(
 // Thunk for setting up auth state listener
 export const initializeAuthListener = () => (dispatch) => {
   return onAuthStateChanged(auth, async (user) => {
-    console.log("CURRENT USER: ", user);
-
     if (!user) {
-      console.log("No active user");
       dispatch(setGlobalUser(null));
       dispatch(setGlobalData(null));
       return;
@@ -82,7 +78,7 @@ const authSlice = createSlice({
         state.isLoading = true;
       })
       .addCase(fetchUserData.fulfilled, (state, action) => {
-        state.globalUser = action.payload;
+        state.globalData = action.payload;
       })
       .addCase(fetchUserData.rejected, (state, action) => {
         state.isLoading = false;

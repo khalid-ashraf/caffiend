@@ -1,23 +1,78 @@
 import { useState } from "react";
 import { useDispatch } from "react-redux";
-import { handleOpenModal } from "../state/modalSlice";
-import { coffeeOptions } from "../utils";
 
-const CoffeeForm = ({ isAuthenticated }) => {
+import { useAuth } from "../state/store";
+import { setGlobalData } from "../state/authSlice";
+import { handleOpenModal } from "../state/modalSlice";
+
+import { coffeeOptions } from "../utils";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "../../firebase";
+
+const CoffeeForm = () => {
   const [selectedCoffee, setSelectedCoffee] = useState(null);
   const [showCoffeeTypes, setShowCoffeeTypes] = useState(false);
   const [coffeeCost, setCoffeeCost] = useState(0);
   const [hour, setHour] = useState(0);
   const [min, setMin] = useState(0);
 
+  const { globalUser, globalData } = useAuth();
+
   const dispatch = useDispatch();
 
-  const handleSubmitForm = () => {
-    if (!isAuthenticated) {
+  const handleSubmitForm = async () => {
+    if (!globalUser) {
       dispatch(handleOpenModal());
       return;
     }
-    console.log(selectedCoffee, coffeeCost, hour, min);
+
+    // define a guard clause that only submits the form once it is completed.
+    if (!selectedCoffee) {
+      alert("Please select coffee");
+      return;
+    }
+    try {
+      const newGlobalData = {
+        ...(globalData || {}),
+      };
+
+      const nowTime = Date.now();
+      const timeToSubtract = hour * 60 * 60 * 1000 + min * 60 * 100;
+
+      const timeStamp = nowTime - timeToSubtract;
+
+      const newData = {
+        name: selectedCoffee,
+        cost: coffeeCost,
+      };
+
+      newGlobalData[timeStamp] = newData;
+      console.log(newGlobalData);
+
+      // update the global state.
+      dispatch(setGlobalData(newGlobalData));
+
+      // persist the data in firestore
+      const userRef = doc(db, "users", globalUser.uid);
+      const res = await setDoc(
+        userRef,
+        {
+          [timeStamp]: newData,
+        },
+        { merge: true }
+      );
+
+      console.log(selectedCoffee, coffeeCost, timeStamp);
+
+      // Reseting form values
+      setSelectedCoffee(null);
+      setCoffeeCost(0);
+      setHour(0);
+      setMin(0);
+    } catch (error) {
+      console.log(error.message);
+    }
+    // then create a new data object
   };
 
   return (
@@ -157,11 +212,7 @@ const TimeEntry = ({ setHour, setMin }) => {
             name='minutes-select'
             id='minutes-select'
           >
-            {Array.from({ length: 6 }, (_, i) => {
-              if (i === 0) return i;
-
-              return i * 10;
-            }).map((minute, minIndex) => {
+            {[0, 5, 10, 15, 30, 45].map((minute, minIndex) => {
               return (
                 <option
                   key={minIndex}
