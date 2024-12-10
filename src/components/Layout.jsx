@@ -1,12 +1,15 @@
 import { useDispatch } from "react-redux";
 import { handleOpenModal } from "../state/modalSlice";
-import { useModal } from "../state/store";
+import { logout } from "../state/authSlice";
+import { useAuth, useModal } from "../state/store";
 
 import Authentication from "./Authentication";
 import Modal from "./Modal";
 
 const Layout = ({ children }) => {
-  const showModal = useModal();
+  const { globalUser } = useAuth();
+  const { isModalOpen } = useModal();
+
   const dispatch = useDispatch();
 
   const header = (
@@ -15,10 +18,16 @@ const Layout = ({ children }) => {
         <h1 className='text-gradient'>CAFFIEND</h1>
         <p>For Caffee Insatiates</p>
       </div>
-      <button onClick={() => dispatch(handleOpenModal())}>
-        <p>Sign up free</p>
-        <i className='fa-solid fa-mug-hot'></i>
-      </button>
+      {globalUser ? (
+        <button onClick={() => dispatch(logout())}>
+          <p>Logout</p>
+        </button>
+      ) : (
+        <button onClick={() => dispatch(handleOpenModal())}>
+          <p>Sign up free</p>
+          <i className='fa-solid fa-mug-hot' />
+        </button>
+      )}
     </header>
   );
 
@@ -48,11 +57,12 @@ const Layout = ({ children }) => {
 
   return (
     <>
-      {showModal ? (
+      {isModalOpen ? (
         <Modal>
           <Authentication />
         </Modal>
       ) : null}
+
       {header}
       <main>{children}</main>
       {footer}

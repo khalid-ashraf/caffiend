@@ -1,36 +1,47 @@
 import { useRef } from "react";
 import { useDispatch } from "react-redux";
 import {
-  setIsRegisteration,
+  setIsRegistration,
   setEmail,
   setPassword,
   setIsAuthenticating,
   handleSubmit,
-} from "../state/authSlice";
-import { useAuth } from "../state/store";
+} from "../state/formInputSlice";
+import { useFormInput } from "../state/store";
+import { signup, login } from "../state/authSlice";
+import { handleCloseModal } from "../state/modalSlice";
 
 const Authentication = () => {
-  const { isRegisteration, email, password, isAuthenticating } = useAuth();
+  const { isRegistration, email, password, isAuthenticating } = useFormInput();
   const dispatch = useDispatch();
-
-  // const {signUp}
 
   const emailRef = useRef("");
   const passwordRef = useRef("");
 
   const handleAuthenticate = async () => {
-    if (!email || !email.includes("@") || !password || !password.length < 6) {
-      return;
+    const emailValue = emailRef.current.value;
+    const passwordValue = passwordRef.current.value;
+
+    try {
+      dispatch(setIsAuthenticating(true));
+
+      if (isRegistration) {
+        await signup(emailValue, passwordValue);
+      } else {
+        await login(emailValue, passwordValue);
+      }
+
+      dispatch(handleCloseModal());
+    } catch (error) {
+      alert("Invalid email or password! Try again.");
+    } finally {
+      dispatch(setIsAuthenticating(false));
     }
-
-    // if(isRegisteration) {
-
-    // } else
   };
 
   return (
     <>
-      <h2 className='sign-up-text'>{isRegisteration ? "Sign up" : "Login"}</h2>
+      <h2 className='sign-up-text'>{isRegistration ? "Sign up" : "Login"}</h2>
 
       <p>Sign in to your account!</p>
       <input
@@ -42,29 +53,20 @@ const Authentication = () => {
         placeholder='********'
         ref={passwordRef}
       />
-      <button
-        onClick={() => {
-          dispatch(
-            handleSubmit({
-              email: emailRef.current.value,
-              password: passwordRef.current.value,
-            })
-          );
-        }}
-      >
-        Submit
+      <button onClick={handleAuthenticate}>
+        {isAuthenticating ? "Authenticating..." : "Submit"}
       </button>
 
       <hr />
 
       <div className='register-content'>
         <p>
-          {isRegisteration
+          {isRegistration
             ? "Already have an account?"
             : "Don't have an account?"}
         </p>
-        <button onClick={() => dispatch(setIsRegisteration(!isRegisteration))}>
-          <p>{isRegisteration ? "Sign in" : "Sign up"}</p>
+        <button onClick={() => dispatch(setIsRegistration(!isRegistration))}>
+          <p>{isRegistration ? "Sign in" : "Sign up"}</p>
         </button>
       </div>
     </>

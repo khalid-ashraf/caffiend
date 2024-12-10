@@ -2,12 +2,7 @@ import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../../firebase";
-import {
-  setGlobalUser,
-  setIsLoading,
-  fetchUserData,
-} from "../state/userAuthSlice";
-import { useUserAuth } from "../state/store";
+import { setGlobalUser, setIsLoading, fetchUserData } from "../state/authSlice";
 
 export const AuthProvider = ({ children }) => {
   const dispatch = useDispatch();

@@ -1,44 +1,98 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { auth, db } from "../../firebase";
+import { doc, getDoc } from "firebase/firestore";
+import {
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+} from "firebase/auth";
+
+const signup = (email, password) => {
+  return createUserWithEmailAndPassword(auth, email, password);
+};
+
+const login = (email, password) => {
+  return signInWithEmailAndPassword(auth, email, password);
+};
 
 const initialState = {
-  isRegisteration: false,
-  email: "",
-  password: "",
-  isAuthenticating: false,
+  globalUser: null,
+  globalData: null,
+  isLoading: false,
+};
+
+// Async thunk for fetching user data from Firestore
+export const fetchUserData = createAsyncThunk(
+  "auth/fetchUserData",
+  async (uid) => {
+    const docRef = doc(db, "users", uid);
+    const docSnap = await getDoc(docRef);
+
+    let firebaseData = {};
+    if (docSnap.exists()) {
+      firebaseData = docSnap.data();
+      console.log("Found user data", firebaseData);
+    }
+    return firebaseData;
+  }
+);
+
+// Thunk for setting up auth state listener
+export const initializeAuthListener = () => (dispatch) => {
+  return onAuthStateChanged(auth, async (user) => {
+    console.log("CURRENT USER: ", user);
+
+    if (!user) {
+      console.log("No active user");
+      dispatch(setGlobalUser(null));
+      dispatch(setGlobalData(null));
+      return;
+    }
+
+    dispatch(setGlobalUser(user));
+    dispatch(fetchUserData(user.uid));
+  });
 };
 
 const authSlice = createSlice({
   name: "authSlice",
   initialState,
   reducers: {
-    setIsRegisteration: (state, action) => {
-      return { ...state, isRegisteration: action.payload };
+    setGlobalUser: (state, action) => {
+      state.globalUser = action.payload;
     },
-    setEmail: (state, action) => {
-      return { ...state, email: action.payload };
+
+    setGlobalData: (state, action) => {
+      state.globalData = action.payload;
     },
-    setPassword: (state, action) => {
-      return { ...state, password: action.payload };
+
+    setIsLoading: (state, action) => {
+      state.isLoading = action.payload;
     },
-    setIsAuthenticating: (state, action) => {
-      return { ...state, authenticating: action.payload };
+    logout: () => {
+      signOut(auth);
+      return initialState;
     },
-    handleSubmit: (state, action) => {
-      return {
-        ...state,
-        email: action.payload.email,
-        password: action.payload.password,
-      };
-    },
+  },
+
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchUserData.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(fetchUserData.fulfilled, (state, action) => {
+        state.globalUser = action.payload;
+      })
+      .addCase(fetchUserData.rejected, (state, action) => {
+        state.isLoading = false;
+        console.log("Error");
+      });
   },
 });
 
-export const {
-  setIsRegisteration,
-  setEmail,
-  setPassword,
-  setIsAuthenticating,
-  handleSubmit,
-} = authSlice.actions;
+export { signup, login };
+export const { setGlobalUser, setGlobalData, setIsLoading, logout } =
+  authSlice.actions;
 
 export default authSlice;
